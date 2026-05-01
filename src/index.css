@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+
+  --color-primary-burgundy: #722f37;
+  --color-primary-olive: #556b2f;
+  --color-warm-wood: #8b4513;
+  --color-off-white: #faf9f6;
+}
+
+@layer base {
+  body {
+    @apply bg-off-white text-gray-900 font-sans;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+.sticky-whatsapp-btn {
+  @apply fixed bottom-6 right-6 z-50 p-4 bg-green-500 text-white rounded-full shadow-2xl hover:bg-green-600 transition-all duration-300 flex items-center justify-center;
+}
