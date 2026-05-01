@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu as MenuIcon, 
@@ -18,72 +13,167 @@ import {
   Wine,
   Coffee,
   CheckCircle2,
-  Navigation
+  Navigation,
+  Globe,
+  Beer,
+  Sparkles
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+type Language = 'es' | 'en' | 'it' | 'fr' | 'ru' | 'zh';
+
+const languages: { code: Language; name: string; flag: string }[] = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ru', name: 'Pусский', flag: '🇷🇺' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+];
+
+const translations: Record<Language, any> = {
+  es: {
+    heroTitle: "Sabor y Tradición en el Corazón de Candelaria",
+    heroSub: "Cocina internacional, tapas auténticas y los mejores vinos. Abierto de 11:00 a 22:30.",
+    reserveBtn: "RESERVAR POR WHATSAPP",
+    about: "Sobre Nosotros",
+    aboutText1: "Somos una tasca familiar ubicada en la Rambla de los Menceyes. Te invitamos a descubrir una selección única de tapas, vinos canarios y platos mediterráneos.",
+    aboutText2: "Ideal para disfrutar de la gastronomía italiana y canaria en el mejor ambiente de Tenerife.",
+    menuTitle: "Nuestras Especialidades",
+    menuSub: "Combinando lo mejor de Italia y Canarias.",
+    sommelier: "Sommelier Virtual",
+    sommelierSub: "Encuentra el maridaje perfecto para tu plato.",
+    pairing: {
+      tapas: "Tapas Canarias",
+      italian: "Pasta Italiana",
+      wine: "Selección de Vinos",
+      beer: "Cervezas Artesanales"
+    }
+  },
+  en: {
+    heroTitle: "Flavor and Tradition in the Heart of Candelaria",
+    heroSub: "International cuisine, authentic tapas, and the best wines. Open 11:00 to 22:30.",
+    reserveBtn: "RESERVE VIA WHATSAPP",
+    about: "About Us",
+    aboutText1: "We are a family-run tavern located in Rambla de los Menceyes. Discover a unique selection of tapas, Canarian wines, and Mediterranean dishes.",
+    aboutText2: "Ideal for enjoying Italian and Canarian gastronomy in Tenerife's best atmosphere.",
+    menuTitle: "Our Specialties",
+    menuSub: "Combining the best of Italy and the Canary Islands.",
+    sommelier: "Virtual Sommelier",
+    sommelierSub: "Find the perfect pairing for your dish.",
+    pairing: {
+      tapas: "Canarian Tapas",
+      italian: "Italian Pasta",
+      wine: "Wine Selection",
+      beer: "Craft Beers"
+    }
+  },
+  it: {
+    heroTitle: "Sapore e Tradizione nel Cuore di Candelaria",
+    heroSub: "Cucina internazionale, tapas autentiche e i migliori vini. Aperto dalle 11:00 alle 22:30.",
+    reserveBtn: "PRENOTA SU WHATSAPP",
+    about: "Chi Siamo",
+    aboutText1: "Siamo una taverna familiare situata nella Rambla de los Menceyes. Scopri una selezione unica di tapas, vini canarini e piatti mediterranei.",
+    aboutText2: "Ideale per gustare la gastronomia italiana e canarina nella migliore atmosfera di Tenerife.",
+    menuTitle: "Le Nostre Specialità",
+    menuSub: "Unendo il meglio dell'Italia e delle Canarie.",
+    sommelier: "Sommelier Virtuale",
+    sommelierSub: "Trova l'abbinamento perfetto per il tuo piatto.",
+    pairing: {
+      tapas: "Tapas Canarie",
+      italian: "Pasta Italiana",
+      wine: "Selezione di Vini",
+      beer: "Birre Artigianali"
+    }
+  },
+  fr: {
+    heroTitle: "Saveur et Tradition au Cœur de Candelaria",
+    heroSub: "Cuisine internationale, tapas authentiques et les meilleurs vins. Ouvert de 11h00 à 22h30.",
+    reserveBtn: "RÉSERVER SUR WHATSAPP",
+    about: "À Propos",
+    aboutText1: "Nous sommes une taverne familiale située sur la Rambla de l'un Menceyes. Découvrez une sélection unique de tapas, de vins canariens et de plats méditerranéens.",
+    aboutText2: "Idéal pour savourer la gastronomie italienne et canarienne dans la meilleure ambiance de Tenerife.",
+    menuTitle: "Nos Spécialités",
+    menuSub: "Alliant le meilleur de l'Italie et des Canaries.",
+    sommelier: "Sommelier Virtuel",
+    sommelierSub: "Trouvez l'accord parfait pour votre plat.",
+    pairing: {
+      tapas: "Tapas Canariennes",
+      italian: "Pâtes Italiennes",
+      wine: "Sélection de Vins",
+      beer: "Bières Artisanales"
+    }
+  },
+  ru: {
+    heroTitle: "Вкус и традиции в самом сердце Канделарии",
+    heroSub: "Международная кухня, аутентичные тапас и лучшие вина. Открыто с 11:00 до 22:30.",
+    reserveBtn: "ЗАБРОНИРОВАТЬ В WHATSAPP",
+    about: "О нас",
+    aboutText1: "Мы — семейная таверна, расположенная на Рамбла-де-лос-Менсейес. Откройте для себя уникальный выбор тапас, канарских вин и средиземноморских блюд.",
+    aboutText2: "Идеально подходит для наслаждения итальянской и канарской гастрономией в лучшей атмосфере Тенерифе.",
+    menuTitle: "Наши фирменные блюда",
+    menuSub: "Сочетание лучшего из Италии и Канарских островов.",
+    sommelier: "Виртуальный сомелье",
+    sommelierSub: "Найдите идеальное сочетание для вашего блюда.",
+    pairing: {
+      tapas: "Канарские тапас",
+      italian: "Итальянская паста",
+      wine: "Выбор вин",
+      beer: "Крафтовое пиво"
+    }
+  },
+  zh: {
+    heroTitle: "坎德拉里亚心脏地带的风味与传统",
+    heroSub: "国际美食、正宗西班牙小吃及顶级佳酿。营业时间：11:00至22:30。",
+    reserveBtn: "通过 WHATSAPP 预订",
+    about: "关于我们",
+    aboutText1: "我们是一家位于 Menceyes 大道的家族式酒馆。在这里，您可以品尝到独特的西班牙小吃、加那利群岛葡萄酒和地中海美食。",
+    aboutText2: "在特内里费岛最棒的氛围中享受意大利和加那利美食的理想场所。",
+    menuTitle: "我们的特色",
+    menuSub: "融合意大利与加那利群岛的精华。",
+    sommelier: "虚拟侍酒师",
+    sommelierSub: "为您的菜肴寻找完美的搭配。",
+    pairing: {
+      tapas: "加那利小吃",
+      italian: "意大利面",
+      wine: "葡萄酒精品",
+      beer: "精酿啤酒"
+    }
+  }
+};
 
 const WHATSAPP_NUMBER = "34613976465";
-const WHATSAPP_MSG = encodeURIComponent(
-  `Hola, me gustaría hacer una reserva en La Bodeguita.
-Fecha: [Insertar DD/MM/AAAA]
-Horario: [Insertar HH:MM - Rango de 11:00 a 22:30]
-Número de personas: [Insertar número]
-Nombre del cliente: [Insertar nombre]
-Solicitud especial (opcional): [Insertar texto]`
-);
-
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MSG}`;
-
-const NAV_ITEMS = [
-  { name: 'Inicio', href: '#inicio' },
-  { name: 'Sobre Nosotros', href: '#sobre-nosotros' },
-  { name: 'Carta', href: '#carta' },
-  { name: 'Galería', href: '#galeria' },
-  { name: 'Contacto', href: '#contacto' },
-];
-
-const STAR_DISHES = [
-  {
-    name: "Tapas Auténticas",
-    description: "Variedad de sabores canarios y mediterráneos.",
-    image: "https://images.unsplash.com/photo-1515443961218-1223b2d1064f?auto=format&fit=crop&q=80&w=800",
-    category: "Nuestras Tapas"
-  },
-  {
-    name: "Platos Mediterráneos",
-    description: "Cocina internacional con toque local.",
-    image: "https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&q=80&w=800",
-    category: "Platos"
-  },
-  {
-    name: "Desayunos Especiales",
-    description: "Para empezar el día con energía frente al mar.",
-    image: "https://images.unsplash.com/photo-1496042399014-17f26f07b19c?auto=format&fit=crop&q=80&w=800",
-    category: "Desayunos"
-  },
-  {
-    name: "Selección de Vinos",
-    description: "Los mejores caldos de la tierra y más.",
-    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&q=80&w=800",
-    category: "Enoteca"
-  }
-];
-
-const REVIEWS = [
-  { name: "Andrés G.", comment: "Comida espectacular y servicio excelente. Las mejores tapas de la zona sin duda.", rating: 5 },
-  { name: "Lucía M.", comment: "Ambiente muy agradable y acogedor. Los desayunos son increíbles.", rating: 5 },
-  { name: "Carlos R.", comment: "Una joya en Candelaria. Selección de vinos canarios de primer nivel.", rating: 5 },
-];
 
 export default function App() {
+  const [lang, setLang] = useState<Language>('es');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [reserveDate, setReserveDate] = useState('');
+  const [reserveTime, setReserveTime] = useState('');
+  const [reservePeople, setReservePeople] = useState('2');
+  const [reserveName, setReserveName] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  
+  const T = useMemo(() => translations[lang], [lang]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleWhatsAppReserve = () => {
+    const text = encodeURIComponent(
+      `Hola, me gustaría hacer una reserva en La Bodeguita.
+Fecha: ${reserveDate || '[Insertar fecha]'}
+Horario: ${reserveTime || '[Insertar hora]'}
+Número de personas: ${reservePeople}
+Nombre del cliente: ${reserveName || '[Insertar nombre]'}
+Solicitud especial: [Insertar texto]`
+    );
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
+    setIsReserveModalOpen(false);
+  };
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -95,10 +185,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-off-white selection:bg-primary-burgundy/30">
       {/* WhatsApp Fixed Button */}
-      <motion.a 
-        href={WHATSAPP_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+      <motion.button 
+        onClick={() => setIsReserveModalOpen(true)}
         className="sticky-whatsapp-btn"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -107,7 +195,7 @@ export default function App() {
       >
         <Phone className="w-6 h-6 mr-2" />
         <span className="font-semibold text-sm">Reservar</span>
-      </motion.a>
+      </motion.button>
 
       {/* Header */}
       <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5 text-white'}`}>
@@ -120,421 +208,343 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="hidden md:flex gap-8 items-center">
-            {NAV_ITEMS.map((item) => (
-              <a 
-                key={item.name} 
-                href={item.href} 
-                className={`font-medium transition-colors hover:text-primary-olive ${scrolled ? 'text-gray-700' : 'text-white'}`}
-              >
-                {item.name}
-              </a>
-            ))}
-            <a 
-              href={WHATSAPP_URL} 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-2.5 bg-primary-burgundy text-white rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-opacity-90 transition-all"
+          <nav className="hidden md:flex gap-6 items-center">
+            {/* Language Switcher */}
+            <div className="flex gap-2 mr-4 bg-black/10 p-1 rounded-full">
+              {languages.map((l) => (
+                <button 
+                  key={l.code} 
+                  onClick={() => setLang(l.code)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-lg hover:bg-white/20 transition-all ${lang === l.code ? 'bg-white shadow-sm scale-110' : ''}`}
+                  title={l.name}
+                >
+                  {l.flag}
+                </button>
+              ))}
+            </div>
+            
+            <a href="#carta" className={`font-medium hover:text-primary-olive transition-colors ${scrolled ? 'text-gray-700' : 'text-white'}`}>Carta</a>
+            <a href="#contacto" className={`font-medium hover:text-primary-olive transition-colors ${scrolled ? 'text-gray-700' : 'text-white'}`}>Contacto</a>
+            
+            <button 
+              onClick={() => setIsReserveModalOpen(true)}
+              className="px-5 py-2 bg-primary-burgundy text-white rounded-full font-semibold text-sm hover:scale-105 transition-all outline-none"
             >
-              Reservar
-            </a>
+              {T.reserveBtn.split(' ')[0]}
+            </button>
           </nav>
 
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className={scrolled ? 'text-gray-900' : 'text-white'} /> : <MenuIcon className={scrolled ? 'text-gray-900' : 'text-white'} />}
+          <button className="md:hidden" onClick={() => setIsMenuOpen(true)}>
+             <MenuIcon className={scrolled ? 'text-gray-900' : 'text-white'} />
           </button>
         </div>
       </header>
 
-      {/* Mobile Menu */}
+      {/* Reservation Modal */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {isReserveModalOpen && (
           <motion.div 
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center gap-8 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           >
-            <button className="absolute top-6 right-4" onClick={() => setIsMenuOpen(false)}>
-              <X className="w-8 h-8 text-gray-900" />
-            </button>
-            {NAV_ITEMS.map((item) => (
-              <a 
-                key={item.name} 
-                href={item.href} 
-                className="text-2xl font-serif font-bold text-gray-900"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.name}
-              </a>
-            ))}
-            <a 
-              href={WHATSAPP_URL}
-              className="mt-4 px-8 py-4 bg-primary-burgundy text-white rounded-full font-bold text-lg"
-              onClick={() => setIsMenuOpen(false)}
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative"
             >
-              Reservar por WhatsApp
-            </a>
+              <button 
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-900"
+                onClick={() => setIsReserveModalOpen(false)}
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+              <h3 className="text-2xl font-bold font-serif text-gray-900 mb-6 flex items-center gap-2">
+                <Calendar className="text-primary-burgundy" /> Reservar Mesa
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nombre</label>
+                  <input 
+                    type="text" 
+                    placeholder="Tu nombre" 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-burgundy outline-none"
+                    value={reserveName}
+                    onChange={(e) => setReserveName(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Fecha</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl"
+                      value={reserveDate}
+                      onChange={(e) => setReserveDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Hora</label>
+                    <input 
+                      type="time" 
+                      min="11:00"
+                      max="22:30"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl"
+                      value={reserveTime}
+                      onChange={(e) => setReserveTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Personas</label>
+                  <select 
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl"
+                    value={reservePeople}
+                    onChange={(e) => setReservePeople(e.target.value)}
+                  >
+                    {[1,2,3,4,5,6,0].map(n => (
+                      <option key={n} value={n === 0 ? '7+' : n}>{n === 0 ? 'Más de 6' : n} personas</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <button 
+                  onClick={handleWhatsAppReserve}
+                  className="w-full py-4 bg-green-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors mt-6 shadow-lg shadow-green-200"
+                >
+                  <Phone className="w-5 h-5" /> Enviar por WhatsApp
+                </button>
+                <p className="text-[10px] text-gray-400 text-center uppercase tracking-widest mt-4">Confirmación inmediata vía chat</p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <main>
-        {/* Hero Section */}
+        {/* Updated Hero */}
         <section id="inicio" className="relative h-screen flex items-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=2000" 
-              alt="Plato estrella La Bodeguita" 
+              src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=2000" 
+              alt="Bodega" 
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 bg-black/60" />
           </div>
           
           <div className="container mx-auto px-4 z-10 text-white pt-20">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="max-w-3xl"
+              className="max-w-4xl"
             >
-              <h2 className="text-primary-olive font-sans font-bold tracking-widest uppercase text-sm mb-4">Candelaria, Tenerife</h2>
-              <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
-                La Bodeguita: Sabor y Tradición en el <span className="text-primary-burgundy">Corazón</span> de Candelaria.
+              <div className="flex gap-2 mb-6">
+                 {languages.map(l => (
+                   <span key={l.code} className={`text-xs p-1 px-2 rounded-full border border-white/20 ${lang === l.code ? 'bg-primary-burgundy' : 'bg-white/5'}`}>{l.code.toUpperCase()}</span>
+                 ))}
+              </div>
+              <h1 className="text-5xl md:text-8xl font-bold mb-6 leading-tight font-serif">
+                {T.heroTitle}
               </h1>
-              <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-xl font-light">
-                Cocina internacional, tapas auténticas y los mejores vinos canarios. Disfruta de un ambiente acogedor de 11:00 a 22:30.
+              <p className="text-xl text-gray-300 mb-10 max-w-2xl font-light">
+                {T.heroSub}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <a 
-                  href={WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-4 bg-primary-burgundy text-white rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+                <button 
+                  onClick={() => setIsReserveModalOpen(true)}
+                  className="px-8 py-5 bg-primary-burgundy text-white rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform"
                 >
-                  <Calendar className="w-5 h-5" />
-                  RESERVAR POR WHATSAPP
-                </a>
+                  <Calendar className="w-6 h-6" />
+                  {T.reserveBtn}
+                </button>
                 <a 
                   href="#carta"
-                  className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
+                  className="px-8 py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:bg-white/20 transition-all font-sans"
                 >
-                  Ver la Carta
+                  Explore menu
                 </a>
               </div>
             </motion.div>
           </div>
-
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 1 }}
-            className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce hidden md:block"
-          >
-            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-              <div className="w-1 h-2 bg-white rounded-full" />
-            </div>
-          </motion.div>
         </section>
 
-        {/* About Section */}
-        <section id="sobre-nosotros" className="py-24 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
+        {/* Innovative Section: Virtual Sommelier */}
+        <section className="py-24 bg-white relative overflow-hidden">
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="bg-primary-olive rounded-[3rem] p-8 md:p-16 text-white grid md:grid-cols-2 gap-12 items-center">
               <motion.div {...fadeIn}>
-                <img 
-                  src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80&w=1200" 
-                  alt="Interior de La Bodeguita" 
-                  className="rounded-3xl shadow-2xl border-4 border-off-white"
-                />
-              </motion.div>
-              <motion.div {...fadeIn} transition={{ delay: 0.2 }}>
-                <span className="text-warm-wood font-bold uppercase tracking-widest text-sm block mb-4">Nuestra Historia</span>
-                <h2 className="text-3xl md:text-5xl font-bold mb-8 text-gray-900">Pasión por la Cocina <span className="text-primary-burgundy italic">Familiar</span></h2>
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  Somos una tasca familiar ubicada en la Rambla de los Menceyes de Candelaria. Te invitamos a descubrir una selección única de tapas, vinos canarios y platos mediterráneos en un ambiente acogedor.
+                <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-6">
+                  <Sparkles className="text-yellow-300 w-5 h-5" />
+                  <span className="text-sm font-bold uppercase tracking-widest">{T.sommelier}</span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-bold mb-6 italic">{T.sommelierSub}</h2>
+                <p className="text-lg text-white/80 mb-8 leading-relaxed">
+                  ¿No sabes qué vino elegir con tu Pasta Carbonara o tu Queso Asado Canario? Nuestro equipo te asesora para que la experiencia sea sublime.
                 </p>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  Ideal para comidas de grupo, cenas románticas o un buen desayuno frente al mar. En La Bodeguita cada plato cuenta una historia de tradición y frescura.
-                </p>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary-olive w-6 h-6" />
-                    <span className="font-medium">Vinos Locales</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary-olive w-6 h-6" />
-                    <span className="font-medium">Huerta Canaria</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary-olive w-6 h-6" />
-                    <span className="font-medium">Selección Gourmet</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="text-primary-olive w-6 h-6" />
-                    <span className="font-medium">Espíritu Mediterráneo</span>
-                  </div>
+                <div className="space-y-4">
+                  {[
+                    { pair: "Tapas Canarias + Vino Blanco Gual", icon: <Wine /> },
+                    { pair: "Pasta Italiana + Malvasía Volcánica", icon: <UtensilsCrossed /> },
+                    { pair: "Vinos Tintos + Vetas de Queso Ahumado", icon: <CheckCircle2 /> }
+                  ].map((p, i) => (
+                    <div key={i} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl hover:bg-white/10 transition-colors">
+                      <div className="p-3 bg-white/20 rounded-xl">{p.icon}</div>
+                      <span className="font-medium text-lg">{p.pair}</span>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
+              <div className="relative">
+                 <img 
+                  src="https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&q=80&w=1000" 
+                  alt="Wine selection" 
+                  className="rounded-3xl shadow-2xl relative z-10"
+                />
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-primary-burgundy/20 rounded-full blur-3xl z-0" />
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Menu Section */}
+        {/* Updated Specialty Section with Canarian/Italian Mix */}
         <section id="carta" className="py-24 bg-off-white">
           <div className="container mx-auto px-4 text-center mb-16">
             <motion.div {...fadeIn}>
-              <h2 className="text-4xl md:text-6xl font-bold mb-4">Lo que nos hace <span className="text-primary-burgundy">Únicos</span></h2>
-              <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-                Una muestra visual de nuestra cocina internacional y selección de vinos. Calidad y sabor en cada bocado (Precio medio: 10-20€/p).
-              </p>
+              <h2 className="text-4xl md:text-6xl font-bold mb-4">{T.menuTitle}</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto text-lg">{T.menuSub}</p>
             </motion.div>
           </div>
 
-          <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {STAR_DISHES.map((dish, idx) => (
+          <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {[
+              { 
+                name: "Trofie al Pesto", 
+                tag: T.pairing.italian,
+                img: "https://images.unsplash.com/photo-1473093226795-af9932fe5856?auto=format&fit=crop&q=80&w=800",
+                desc: "Pasta artesanal italiana con albahaca fresca y piñones."
+              },
+              { 
+                name: "Queso Asado con Mojo", 
+                tag: T.pairing.tapas,
+                img: "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?auto=format&fit=crop&q=80&w=800",
+                desc: "Auténtico queso palmero con mojos tradicionales canarios."
+              },
+              { 
+                name: "Selección Craft Beer", 
+                tag: T.pairing.beer,
+                img: "https://images.unsplash.com/photo-1532635241-17e820acc59f?auto=format&fit=crop&q=80&w=800",
+                desc: "Cervezas artesanales locales e internacionales."
+              },
+              { 
+                name: "Lasagna Tradizionale", 
+                tag: T.pairing.italian,
+                img: "https://images.unsplash.com/photo-1560717845-968823efbee1?auto=format&fit=crop&q=80&w=800",
+                desc: "Receta secreta de la nonna con carne seleccionada."
+              },
+              { 
+                name: "Papas Arrugadas", 
+                tag: T.pairing.tapas,
+                img: "https://images.unsplash.com/photo-1596797038530-2c39bb8ed291?auto=format&fit=crop&q=80&w=800",
+                desc: "El clásico canario con mojo picón y cilantro."
+              },
+              { 
+                name: "Bodega de Autor", 
+                tag: T.pairing.wine,
+                img: "https://images.unsplash.com/photo-1506377247377-2a5b3b0ca3ef?auto=format&fit=crop&q=80&w=800",
+                desc: "Vinos de Tenerife con DO Tacoronte-Acentejo."
+              }
+            ].map((item, idx) => (
               <motion.div 
                 key={idx}
                 {...fadeIn}
                 transition={{ delay: idx * 0.1 }}
-                className="group relative overflow-hidden rounded-3xl bg-white shadow-lg cursor-pointer"
+                className="group bg-white rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all"
               >
-                <div className="aspect-[4/5] overflow-hidden">
-                  <img 
-                    src={dish.image} 
-                    alt={dish.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+                <div className="h-64 overflow-hidden relative">
+                   <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-primary-burgundy">
+                     {item.tag}
+                   </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-8 flex flex-col justify-end">
-                  <span className="text-primary-olive font-bold text-xs uppercase tracking-widest mb-2 bg-white/90 px-3 py-1 rounded-full w-fit">
-                    {dish.category}
-                  </span>
-                  <h3 className="text-2xl text-white font-bold mb-2">{dish.name}</h3>
-                  <p className="text-gray-300 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity">
-                    {dish.description}
-                  </p>
+                <div className="p-8">
+                  <h3 className="text-2xl font-bold mb-3">{item.name}</h3>
+                  <p className="text-gray-500 mb-6 line-clamp-2">{item.desc}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-primary-olive font-bold">12€ - 18€</span>
+                    <button className="w-10 h-10 bg-off-white rounded-full flex items-center justify-center group-hover:bg-primary-burgundy group-hover:text-white transition-colors">
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* Features / Icons */}
-        <section className="py-16 bg-white border-y border-gray-100">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
-              <motion.div {...fadeIn} className="text-center">
-                <div className="w-16 h-16 bg-primary-burgundy/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <UtensilsCrossed className="text-primary-burgundy w-8 h-8" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Tapas</h4>
-                <p className="text-gray-500 text-sm">Fusión internacional</p>
-              </motion.div>
-              <motion.div {...fadeIn} transition={{ delay: 0.1 }} className="text-center">
-                <div className="w-16 h-16 bg-primary-olive/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Wine className="text-primary-olive w-8 h-8" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Enoteca</h4>
-                <p className="text-gray-500 text-sm">Vinos de selección</p>
-              </motion.div>
-              <motion.div {...fadeIn} transition={{ delay: 0.2 }} className="text-center">
-                <div className="w-16 h-16 bg-warm-wood/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Coffee className="text-warm-wood w-8 h-8" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Desayunos</h4>
-                <p className="text-gray-500 text-sm">Comienza el día</p>
-              </motion.div>
-              <motion.div {...fadeIn} transition={{ delay: 0.3 }} className="text-center">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Star className="text-blue-500 w-8 h-8" />
-                </div>
-                <h4 className="font-bold text-lg mb-2">Ambiente</h4>
-                <p className="text-gray-500 text-sm">Acogedor y familiar</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* Reviews */}
-        <section className="py-24 bg-primary-burgundy text-white overflow-hidden">
-          <div className="container mx-auto px-4 text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Lo que dicen de <span className="text-primary-olive">Nosotros</span></h2>
-            <div className="flex justify-center gap-1 mb-8">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-              ))}
-              <span className="ml-2 font-bold text-lg">4.5/5</span>
-            </div>
-          </div>
-
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-3 gap-8">
-              {REVIEWS.map((review, idx) => (
-                <motion.div 
-                  key={idx}
-                  {...fadeIn}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-white/10 backdrop-blur-lg p-10 rounded-3xl border border-white/20 flex flex-col justify-between h-full"
-                >
-                  <div>
-                    <div className="flex gap-1 mb-6">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-white text-white" />
-                      ))}
-                    </div>
-                    <p className="text-lg italic mb-6 leading-relaxed">"{review.comment}"</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center font-bold text-sm">
-                      {review.name[0]}
-                    </div>
-                    <span className="font-bold">{review.name}</span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-12 text-center">
-              <a 
-                href="https://www.google.com/search?q=La+Bodeguita+Candelaria+resenas" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
-              >
-                Ver más reseñas en Google <ChevronRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Gallery / Instagram Section */}
-        <section id="galeria" className="py-24 bg-white text-center">
-          <div className="container mx-auto px-4 mb-16">
-            <h2 className="text-4xl font-bold mb-4">Nuestro Mundo en <span className="text-primary-olive">Instagram</span></h2>
-            <p className="text-gray-500">Síguenos en @labodeguitacandelaria para no perderte nada.</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 px-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="aspect-square bg-gray-100 overflow-hidden relative group">
-                <img 
-                  src={`https://images.unsplash.com/photo-${1500000000000 + i}?auto=format&fit=crop&q=80&w=600`} 
-                  alt="Gallery" 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&q=80&w=600";
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Instagram className="text-white w-8 h-8" />
-                </div>
+        {/* Multilingual Experience banner */}
+        <section className="py-12 bg-gray-900 overflow-hidden">
+          <div className="flex whitespace-nowrap animate-infinite-scroll">
+            {languages.concat(languages).map((l, i) => (
+              <div key={i} className="flex items-center gap-4 mx-12">
+                 <span className="text-4xl">{l.flag}</span>
+                 <span className="text-white text-2xl font-serif font-bold uppercase tracking-wider">{l.name}</span>
               </div>
             ))}
           </div>
-          <div className="mt-12">
-            <a 
-              href="https://instagram.com/labodeguitacandelaria" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-primary-burgundy text-primary-burgundy rounded-full font-bold hover:bg-primary-burgundy hover:text-white transition-all inline-flex items-center gap-2"
-            >
-              <Instagram className="w-5 h-5" />
-              SÍGUENOS EN INSTAGRAM
-            </a>
-          </div>
         </section>
 
-        {/* Footer / Contact */}
+        {/* Contact/Footer */}
         <footer id="contacto" className="bg-gray-900 text-white pt-24 pb-12">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-3 gap-16 mb-24">
-              <div>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-primary-burgundy rounded-full flex items-center justify-center text-white font-serif font-bold text-2xl">LB</div>
-                  <h3 className="text-2xl font-bold font-serif">La Bodeguita</h3>
-                </div>
-                <p className="text-gray-400 mb-8 max-w-xs">
-                  Sabor y tradición en el corazón de Candelaria. Una tasca familiar donde la cocina internacional se encuentra con el alma canaria.
-                </p>
-                <div className="flex gap-4">
-                  <a href="https://instagram.com/labodeguitacandelaria" className="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:bg-white hover:text-gray-900 transition-all">
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                  <a href={WHATSAPP_URL} className="w-10 h-10 border border-gray-700 rounded-full flex items-center justify-center hover:bg-white hover:text-gray-900 transition-all">
-                    <Phone className="w-5 h-5" />
-                  </a>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-bold mb-8">Ubicación y Horarios</h3>
-                <ul className="space-y-6">
-                  <li className="flex gap-4">
-                    <MapPin className="text-primary-olive shrink-0 w-6 h-6" />
-                    <span className="text-gray-400">Rambla de los Menceyes, s/n, 38530 Candelaria, Santa Cruz de Tenerife.</span>
-                  </li>
-                  <li className="flex gap-4">
-                    <Clock className="text-primary-olive shrink-0 w-6 h-6" />
-                    <div>
-                      <p className="text-white font-medium">Miércoles a Domingo</p>
-                      <p className="text-gray-400">11:00 - 22:30</p>
-                      <p className="text-primary-burgundy font-medium mt-2">Lunes y Martes - Cerrado</p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-bold mb-8">Contacto Rápido</h3>
-                <div className="space-y-4">
-                  <a href="tel:+34613976465" className="flex items-center gap-4 group">
-                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center group-hover:bg-primary-burgundy/20 transition-all">
-                      <Phone className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-widest">Llamar directo</p>
-                      <p className="font-bold">+34 613 97 64 65</p>
-                    </div>
-                  </a>
-                  <a href={WHATSAPP_URL} className="flex items-center gap-4 group">
-                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center group-hover:bg-green-500/20 transition-all">
-                      <Calendar className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-widest">Reservar Mesa</p>
-                      <p className="font-bold">Chat WhatsApp</p>
-                    </div>
-                  </a>
-                  <a 
-                    href="https://www.google.com/maps/dir/?api=1&destination=Rambla+de+los+Menceyes+Candelaria" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 group"
-                  >
-                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center group-hover:bg-blue-500/20 transition-all">
-                      <Navigation className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-widest">Guíame</p>
-                      <p className="font-bold text-blue-400 uppercase text-xs tracking-widest">📌 Cómo llegar</p>
-                    </div>
-                  </a>
-                </div>
-              </div>
+          <div className="container mx-auto px-4 text-center">
+            <h3 className="text-4xl md:text-6xl font-serif font-bold mb-12">Tenerife + Italy = <span className="text-primary-olive">Love</span></h3>
+            <div className="grid md:grid-cols-4 gap-8 text-left mb-24">
+               <div>
+                  <h4 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-6">Language</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {languages.map(l => (
+                      <button key={l.code} onClick={() => setLang(l.code)} className={`text-sm ${lang === l.code ? 'text-white font-bold' : 'text-gray-500'}`}>
+                        {l.flag} {l.name}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+               <div>
+                  <h4 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-6">Visit</h4>
+                  <p className="text-lg">Rambla de los Menceyes, s/n</p>
+                  <p className="text-gray-400">38530 Candelaria, Tenerife</p>
+               </div>
+               <div>
+                  <h4 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-6">Talk</h4>
+                  <p className="text-lg font-bold">+34 613 97 64 65</p>
+                  <p className="text-gray-400">WhatsApp for bookings</p>
+               </div>
+               <div>
+                  <h4 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-6">Schedule</h4>
+                  <p className="text-lg">11:00 — 22:30</p>
+                  <p className="text-primary-burgundy font-bold">Mon & Tue Closed</p>
+               </div>
             </div>
-
-            <div className="border-t border-gray-800 pt-12 flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-gray-500 text-sm">
-                &copy; {new Date().getFullYear()} La Bodeguita Candelaria. Todos los derechos reservados.
-              </p>
-              <div className="flex gap-8 text-sm text-gray-500">
-                <a href="#" className="hover:text-white transition-colors">Aviso Legal</a>
-                <a href="#" className="hover:text-white transition-colors">Privacidad</a>
-              </div>
-            </div>
+            <p className="text-gray-700 text-sm">© {new Date().getFullYear()} La Bodeguita Candelaria. Made with ❤️ in Tenerife.</p>
           </div>
         </footer>
       </main>
+
+      <style>{`
+        @keyframes infinite-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .animate-infinite-scroll {
+          display: flex;
+          width: max-content;
+          animation: infinite-scroll 40s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
